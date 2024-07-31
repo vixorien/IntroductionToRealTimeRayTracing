@@ -105,10 +105,9 @@ void Game::Draw(float deltaTime, float totalTime)
 	// Grab the current back buffer for this frame
 	Microsoft::WRL::ComPtr<ID3D12Resource> currentBackBuffer = Graphics::BackBuffers[Graphics::SwapChainIndex()];
 
-	// Ray tracing here!
-	{
-		RayTracing::Raytrace(camera, currentBackBuffer);
-	}
+	// Ray tracing
+	RayTracing::Raytrace(camera, currentBackBuffer);
+	Graphics::CloseAndExecuteCommandList();
 
 	// Present
 	{

@@ -14,6 +14,11 @@ namespace RayTracing
 	{
 		bool dxrAvailable = false;
 		bool dxrInitialized = false;
+
+		// Error messages
+		const char* errorRaytracingNotSupported = "\nERROR: Raytracing not supported by the current graphics device.\n(On laptops, this may be due to battery saver mode.)\n";
+		const char* errorDXRDeviceQueryFailed = "\nERROR: DXR Device query failed - DirectX Raytracing unavailable.\n";
+		const char* errorDXRCommandListQueryFailed = "\nERROR: DXR Command List query failed - DirectX Raytracing unavailable.\n";
 	}
 }
 
@@ -42,13 +47,13 @@ HRESULT RayTracing::Initialize(
 	HRESULT dxrCommandListResult = Graphics::CommandList->QueryInterface(IID_PPV_ARGS(DXRCommandList.GetAddressOf()));
 
 	// Check the results
-	if (FAILED(supportResult) || rtSupport.RaytracingTier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED) { printf("Raytracing not supported.\n"); return supportResult; }
-	if (FAILED(dxrDeviceResult)) { printf("DXR Device query failed - DirectX Raytracing unavailable.\n"); return dxrDeviceResult; }
-	if (FAILED(dxrCommandListResult)) { printf("DXR Command List query failed - DirectX Raytracing unavailable.\n"); return dxrCommandListResult; }
+	if (FAILED(supportResult) || rtSupport.RaytracingTier == D3D12_RAYTRACING_TIER_NOT_SUPPORTED) { printf("%s", errorRaytracingNotSupported); return supportResult; }
+	if (FAILED(dxrDeviceResult)) { printf("%s", errorDXRDeviceQueryFailed); return dxrDeviceResult; }
+	if (FAILED(dxrCommandListResult)) { printf("%s", errorDXRCommandListQueryFailed); return dxrCommandListResult; }
 
 	// We have DXR support
 	dxrAvailable = true;
-	printf("DXR initialization success!\n");
+	printf("\nDXR initialization success!\n");
 
 	// Proceed with setup
 	CreateRaytracingRootSignatures();
@@ -803,12 +808,5 @@ void RayTracing::Raytrace(std::shared_ptr<Camera> camera, Microsoft::WRL::ComPtr
 		DXRCommandList->ResourceBarrier(1, &outputBarriers[0]);
 	}
 
-	// Close and execute
-	{
-		DXRCommandList->Close();
-		ID3D12CommandList* lists[] = { DXRCommandList.Get() };
-		Graphics::CommandQueue->ExecuteCommandLists(1, lists);
-	}
-
-	// Assuming the frame sync and command list reset will happen over in Game!
+	// Assuming command list will be executed elsewhere
 }
